@@ -172,6 +172,21 @@ line(405, 234, 451, 214, 3, [177, 241, 227], .78);
 line(867, 493, 924, 479, 3, [130, 218, 216], .78);
 line(329, 333, 364, 310, 2, [230, 255, 235], .9);
 
+// Soft vignette: the four corners lose a little brightness so the dive reads first.
+// Applied in the supersampled buffer, before the downsample, so it cannot add banding.
+const VIGNETTE = 0.17;
+for (let y = 0; y < SH; y++) {
+  const ny = (y + 0.5) / SH * 2 - 1;
+  for (let x = 0; x < SW; x++) {
+    const nx = (x + 0.5) / SW * 2 - 1;
+    // Normalised so a corner reaches 1 and the centre stays 0; squared to keep the falloff gentle.
+    const fall = Math.min(1, (nx * nx + ny * ny) / 2);
+    const shade = 1 - VIGNETTE * fall * fall;
+    const i = (y * SW + x) * 3;
+    pixels[i] *= shade; pixels[i + 1] *= shade; pixels[i + 2] *= shade;
+  }
+}
+
 function crc32(data: Buffer): number {
   let crc = 0xffffffff;
   for (const byte of data) {
